@@ -1,225 +1,195 @@
-import { type FormEvent, useEffect, useState } from 'react'
-import Dashboard from './components/Dashboard'
-import LoginPage from './components/LoginPage'
+import { useEffect, useMemo, useState } from "react";
+import BillingCheckoutPage from "./pages/BillingCheckoutPage";
+import BookingManagementPage from "./pages/BookingManagementPage";
+import DashboardOverviewPage from "./pages/DashboardOverviewPage";
+import InStayServicesPage from "./pages/InStayServicesPage";
+import ReportsPage from "./pages/ReportsPage";
+import RoomManagementPage from "./pages/RoomManagementPage";
+import SettingsPage from "./pages/SettingsPage";
+import AdminLayout from "./layout/AdminLayout";
+import useRooms from "./hooks/useRooms";
 import {
-  generateRoomInventoryId,
-  roomInventory as initialRoomInventory,
-  type RoomInventoryId,
-  type RoomInventoryItem,
-} from './data/rooms'
-import './App.css'
+  getAdminRouteTitle,
+  isAdminRoute,
+  type AdminRoute,
+} from "./layout/adminRoutes";
+import {
+  bookingsMock,
+  guestsMock,
+  serviceCatalogMock,
+  serviceChargesMock,
+  toLocalIsoDate,
+  type BookingStatus,
+} from "./data/hmsMockData";
+import type { RoomPayload } from "./services/roomService";
+import "./styles/admin.css";
 
-type Route =
-  | '/'
-  | '/dashboard'
-  | '/dashboard/bookings'
-  | '/dashboard/rooms'
-  | `/dashboard/rooms/${number}`
-
-const ROOM_ROUTE_PREFIX = '/dashboard/rooms/'
-const MAX_ROOM_ID = 9_999_999_999
-
-type RoomMutationInput = Omit<RoomInventoryItem, 'id'>
-type LegacyRoomInventoryItem = RoomInventoryItem & {
-  image?: string
-  images?: string[]
-}
-
-const parseRoomInventoryId = (value: string): RoomInventoryId | undefined => {
-  const parsedId = Number(value)
-
-  if (
-    !Number.isInteger(parsedId) ||
-    parsedId < 1 ||
-    parsedId > MAX_ROOM_ID
-  ) {
-    return undefined
+const getInitialRoute = (): AdminRoute => {
+  const { pathname } = window.location;
+  if (isAdminRoute(pathname)) {
+    return pathname;
   }
 
-  return parsedId
-}
+  window.history.replaceState({}, "", "/dashboard");
+  return "/dashboard";
+};
 
-const getRoomIdFromRoute = (route: Route): RoomInventoryId | undefined => {
-  if (!route.startsWith(ROOM_ROUTE_PREFIX)) {
-    return undefined
-  }
-
-  return parseRoomInventoryId(route.slice(ROOM_ROUTE_PREFIX.length))
-}
-
-const buildRoomDetailRoute = (roomId: RoomInventoryId): Route =>
-  `/dashboard/rooms/${roomId}`
-
-const normalizeRoomImages = (
-  room: Partial<Pick<LegacyRoomInventoryItem, 'images' | 'image'>>
-) => {
-  if (Array.isArray(room.images) && room.images.length) {
-    return Array.from(
-      new Set(
-        room.images
-          .map((image) => image.trim())
-          .filter((image) => image.length > 0)
-      )
-    )
-  }
-
-  if (typeof room.image === 'string') {
-    const legacyImage = room.image.trim()
-    if (legacyImage) {
-      return [legacyImage]
-    }
-  }
-
-  return []
-}
-
-const normalizeRoomInventoryItem = (
-  room: RoomInventoryItem | LegacyRoomInventoryItem
-): RoomInventoryItem => ({
-  ...room,
-  images: normalizeRoomImages(room),
-})
-
-const getRouteFromPath = (): Route => {
-  const { pathname } = window.location
-
-  if (pathname === '/dashboard') {
-    return '/dashboard'
-  }
-
-  if (pathname === '/dashboard/rooms') {
-    return '/dashboard/rooms'
-  }
-
-  if (pathname === '/dashboard/bookings') {
-    return '/dashboard/bookings'
-  }
-
-  if (pathname.startsWith(ROOM_ROUTE_PREFIX)) {
-    const roomId = parseRoomInventoryId(pathname.slice(ROOM_ROUTE_PREFIX.length))
-    if (roomId) {
-      return buildRoomDetailRoute(roomId)
-    }
-  }
-
-  return '/'
-}
+const getRouteFromPath = (): AdminRoute => {
+  const { pathname } = window.location;
+  return isAdminRoute(pathname) ? pathname : "/dashboard";
+};
 
 function App() {
-  const [route, setRoute] = useState<Route>(getRouteFromPath)
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [roomInventory, setRoomInventory] = useState<RoomInventoryItem[]>(
-    () => initialRoomInventory.map(normalizeRoomInventoryItem)
-  )
+  const [route, setRoute] = useState<AdminRoute>(getInitialRoute);
+  const {
+    rooms,
+    isLoading: isRoomsLoading,
+    mutationType: roomMutationType,
+    error: roomError,
+    createRoom,
+    updateRoom,
+    deleteRoom,
+    bulkDeleteRooms,
+  } = useRooms();
+  const [guests] = useState(guestsMock);
+  const [bookings, setBookings] = useState(bookingsMock);
+  const [serviceCharges, setServiceCharges] = useState(serviceChargesMock);
 
   useEffect(() => {
-    const handlePopState = () => setRoute(getRouteFromPath())
+    const handlePopState = () => setRoute(getRouteFromPath());
 
-    window.addEventListener('popstate', handlePopState)
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [])
-
-  const navigate = (nextRoute: Route) => {
+  const navigate = (nextRoute: AdminRoute) => {
     if (window.location.pathname !== nextRoute) {
-      window.history.pushState({}, '', nextRoute)
+      window.history.pushState({}, "", nextRoute);
     }
 
-    setRoute(nextRoute)
-  }
+    setRoute(nextRoute);
+  };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    navigate('/dashboard')
-  }
+  const serviceById = useMemo(
+    () =>
+      new Map(
+        serviceCatalogMock.map((service) => [service.id, service] as const),
+      ),
+    [],
+  );
 
-  const handleToggleMode = () => {
-    setMode((currentMode) => (currentMode === 'login' ? 'signup' : 'login'))
-  }
-
-  const roomId = getRoomIdFromRoute(route)
-
-  const handleCreateRoom = (roomInput: RoomMutationInput) => {
-    setRoomInventory((currentInventory) => [
-      ...currentInventory,
-      {
-        id: generateRoomInventoryId(),
-        ...roomInput,
-        images: normalizeRoomImages(roomInput),
-      },
-    ])
-  }
-
-  const handleUpdateRoom = (
-    roomIdToUpdate: RoomInventoryId,
-    roomInput: RoomMutationInput
+  const handleUpdateBookingStatus = (
+    bookingId: number,
+    nextStatus: BookingStatus,
   ) => {
-    setRoomInventory((currentInventory) =>
-      currentInventory.map((room) =>
-        room.id === roomIdToUpdate
-          ? {
-              ...room,
-              ...roomInput,
-              images: normalizeRoomImages(roomInput),
-            }
-          : room
-      )
-    )
-  }
+    setBookings((currentBookings) =>
+      currentBookings.map((booking) =>
+        booking.id === bookingId ? { ...booking, status: nextStatus } : booking,
+      ),
+    );
+  };
 
-  const handleDeleteRoom = (roomIdToDelete: RoomInventoryId) => {
-    setRoomInventory((currentInventory) =>
-      currentInventory.filter((room) => room.id !== roomIdToDelete)
-    )
-
-    if (roomIdToDelete === roomId) {
-      navigate('/dashboard/rooms')
+  const handleAddServiceCharge = (payload: {
+    bookingId: number;
+    serviceId: number;
+    quantity: number;
+  }) => {
+    const service = serviceById.get(payload.serviceId);
+    if (!service) {
+      return;
     }
-  }
 
-  if (
-    route === '/dashboard' ||
-    route === '/dashboard/bookings' ||
-    route === '/dashboard/rooms' ||
-    roomId
-  ) {
-    return (
-      <Dashboard
-        roomInventory={roomInventory}
-        view={
-          route === '/dashboard'
-            ? 'overview'
-            : route === '/dashboard/bookings'
-              ? 'bookings'
-            : route === '/dashboard/rooms'
-              ? 'rooms'
-              : 'room-details'
-        }
-        roomId={roomId}
-        onLogout={() => navigate('/')}
-        onNavigateOverview={() => navigate('/dashboard')}
-        onNavigateBookings={() => navigate('/dashboard/bookings')}
-        onNavigateRooms={() => navigate('/dashboard/rooms')}
-        onOpenRoomDetails={(selectedRoomId) =>
-          navigate(buildRoomDetailRoute(selectedRoomId))
-        }
+    setServiceCharges((currentCharges) => [
+      ...currentCharges,
+      {
+        id: currentCharges.length
+          ? Math.max(...currentCharges.map((charge) => charge.id)) + 1
+          : 1,
+        bookingId: payload.bookingId,
+        serviceId: payload.serviceId,
+        quantity: payload.quantity,
+        amount: service.unitPrice * payload.quantity,
+        chargedAt: toLocalIsoDate(new Date()),
+      },
+    ]);
+  };
+
+  const handleCreateRoom = async (payload: RoomPayload) => {
+    await createRoom(payload);
+  };
+
+  const handleUpdateRoom = async (roomId: number, payload: RoomPayload) => {
+    await updateRoom(roomId, payload);
+  };
+
+  const handleDeleteRoom = async (roomId: number) => {
+    await deleteRoom(roomId);
+  };
+
+  const handleBulkDeleteRooms = async (roomIds: number[]) => {
+    await bulkDeleteRooms(roomIds);
+  };
+
+  const pageContent =
+    route === "/dashboard" ? (
+      <DashboardOverviewPage
+        rooms={rooms}
+        bookings={bookings}
+        guests={guests}
+        serviceCharges={serviceCharges}
+      />
+    ) : route === "/rooms" ? (
+      <RoomManagementPage
+        rooms={rooms}
+        isLoading={isRoomsLoading}
+        mutationType={roomMutationType}
+        error={roomError}
         onCreateRoom={handleCreateRoom}
         onUpdateRoom={handleUpdateRoom}
         onDeleteRoom={handleDeleteRoom}
-        onBackToRooms={() => navigate('/dashboard/rooms')}
+        onBulkDeleteRooms={handleBulkDeleteRooms}
       />
-    )
-  }
+    ) : route === "/bookings" ? (
+      <BookingManagementPage
+        bookings={bookings}
+        guests={guests}
+        onUpdateBookingStatus={handleUpdateBookingStatus}
+      />
+    ) : route === "/services" ? (
+      <InStayServicesPage
+        bookings={bookings}
+        guests={guests}
+        serviceCatalog={serviceCatalogMock}
+        serviceCharges={serviceCharges}
+        onAddServiceCharge={handleAddServiceCharge}
+      />
+    ) : route === "/billing" ? (
+      <BillingCheckoutPage
+        bookings={bookings}
+        guests={guests}
+        serviceCatalog={serviceCatalogMock}
+        serviceCharges={serviceCharges}
+        onUpdateBookingStatus={handleUpdateBookingStatus}
+      />
+    ) : route === "/reports" ? (
+      <ReportsPage
+        rooms={rooms}
+        bookings={bookings}
+        serviceCharges={serviceCharges}
+      />
+    ) : (
+      <SettingsPage />
+    );
 
   return (
-    <LoginPage
-      mode={mode}
-      onSubmit={handleSubmit}
-      onToggleMode={handleToggleMode}
-    />
-  )
+    <AdminLayout
+      currentRoute={route}
+      pageTitle={getAdminRouteTitle(route)}
+      onNavigate={navigate}
+    >
+      {pageContent}
+    </AdminLayout>
+  );
 }
 
-export default App
+export default App;

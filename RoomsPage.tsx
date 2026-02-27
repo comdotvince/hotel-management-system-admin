@@ -4,146 +4,143 @@ import {
   type KeyboardEvent,
   useMemo,
   useState,
-} from 'react'
+} from "react";
 import {
   rooms,
   type RoomAvailabilityStatus,
   type RoomInventoryId,
   type RoomInventoryItem,
   type RoomTypeId,
-} from '../data/rooms'
+} from "./src/data/rooms";
 
-type RoomMutationInput = Omit<RoomInventoryItem, 'id'>
+type RoomMutationInput = Omit<RoomInventoryItem, "id">;
 
 type RoomsPageProps = {
-  roomInventory: RoomInventoryItem[]
-  onOpenRoomDetails: (roomId: RoomInventoryId) => void
-  onCreateRoom: (roomInput: RoomMutationInput) => void
-}
+  roomInventory: RoomInventoryItem[];
+  onOpenRoomDetails: (roomId: RoomInventoryId) => void;
+  onCreateRoom: (roomInput: RoomMutationInput) => void;
+};
 
 const availabilityOptions: Array<{
-  value: 'all' | RoomAvailabilityStatus
-  label: string
+  value: "all" | RoomAvailabilityStatus;
+  label: string;
 }> = [
-  { value: 'all', label: 'All statuses' },
-  { value: 'available', label: 'Available' },
-  { value: 'occupied', label: 'Occupied' },
-]
+  { value: "all", label: "All statuses" },
+  { value: "available", label: "Available" },
+  { value: "occupied", label: "Occupied" },
+];
 
 const getAvailabilityLabel = (status: RoomAvailabilityStatus) =>
-  status === 'available' ? 'Available' : 'Occupied'
+  status === "available" ? "Available" : "Occupied";
 
-const getDefaultRoomTypeId = (): RoomTypeId => rooms[0]?.id ?? 'standard-room'
+const getDefaultRoomTypeId = (): RoomTypeId => rooms[0]?.id ?? "standard-room";
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
-    const fileReader = new FileReader()
+    const fileReader = new FileReader();
     fileReader.onload = () => {
-      if (typeof fileReader.result === 'string') {
-        resolve(fileReader.result)
-        return
+      if (typeof fileReader.result === "string") {
+        resolve(fileReader.result);
+        return;
       }
 
-      reject(new Error('Failed to read file as data URL'))
-    }
+      reject(new Error("Failed to read file as data URL"));
+    };
     fileReader.onerror = () =>
-      reject(new Error(`Failed to read "${file.name}"`))
-    fileReader.readAsDataURL(file)
-  })
+      reject(new Error(`Failed to read "${file.name}"`));
+    fileReader.readAsDataURL(file);
+  });
 
 const readFilesAsDataUrls = async (files: File[]) =>
-  Promise.all(files.map(readFileAsDataUrl))
+  Promise.all(files.map(readFileAsDataUrl));
 
 function RoomsPage({
   roomInventory,
   onOpenRoomDetails,
   onCreateRoom,
 }: RoomsPageProps) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [selectedFloor, setSelectedFloor] = useState<'all' | number>('all')
-  const [selectedType, setSelectedType] = useState<'all' | RoomTypeId>('all')
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState<"all" | number>("all");
+  const [selectedType, setSelectedType] = useState<"all" | RoomTypeId>("all");
   const [selectedAvailability, setSelectedAvailability] = useState<
-    'all' | RoomAvailabilityStatus
-  >('all')
-  const [createRoomNumber, setCreateRoomNumber] = useState('')
-  const [createFloor, setCreateFloor] = useState('')
-  const [createTypeId, setCreateTypeId] = useState<RoomTypeId>(
-    getDefaultRoomTypeId
-  )
+    "all" | RoomAvailabilityStatus
+  >("all");
+  const [createRoomNumber, setCreateRoomNumber] = useState("");
+  const [createFloor, setCreateFloor] = useState("");
+  const [createTypeId, setCreateTypeId] =
+    useState<RoomTypeId>(getDefaultRoomTypeId);
   const [createStatus, setCreateStatus] =
-    useState<RoomAvailabilityStatus>('available')
-  const [createImageUrlInput, setCreateImageUrlInput] = useState('')
-  const [createImages, setCreateImages] = useState<string[]>([])
-  const [createError, setCreateError] = useState('')
+    useState<RoomAvailabilityStatus>("available");
+  const [createImageUrlInput, setCreateImageUrlInput] = useState("");
+  const [createImages, setCreateImages] = useState<string[]>([]);
+  const [createError, setCreateError] = useState("");
 
   const floors = useMemo(
     () =>
       Array.from(new Set(roomInventory.map((room) => room.floor))).sort(
-        (a, b) => a - b
+        (a, b) => a - b,
       ),
-    [roomInventory]
-  )
+    [roomInventory],
+  );
 
-  const filteredRooms = useMemo(
-    () => {
-      const matchingRooms = roomInventory.filter((room) => {
-        const floorMatches =
-          selectedFloor === 'all' || room.floor === selectedFloor
-        const typeMatches = selectedType === 'all' || room.typeId === selectedType
-        const availabilityMatches =
-          selectedAvailability === 'all' || room.status === selectedAvailability
+  const filteredRooms = useMemo(() => {
+    const matchingRooms = roomInventory.filter((room) => {
+      const floorMatches =
+        selectedFloor === "all" || room.floor === selectedFloor;
+      const typeMatches =
+        selectedType === "all" || room.typeId === selectedType;
+      const availabilityMatches =
+        selectedAvailability === "all" || room.status === selectedAvailability;
 
-        return floorMatches && typeMatches && availabilityMatches
-      })
+      return floorMatches && typeMatches && availabilityMatches;
+    });
 
-      return matchingRooms.sort(
-        (firstRoom, secondRoom) =>
-          firstRoom.floor - secondRoom.floor ||
-          firstRoom.roomNumber.localeCompare(secondRoom.roomNumber)
-      )
-    },
-    [roomInventory, selectedAvailability, selectedFloor, selectedType]
-  )
+    return matchingRooms.sort(
+      (firstRoom, secondRoom) =>
+        firstRoom.floor - secondRoom.floor ||
+        firstRoom.roomNumber.localeCompare(secondRoom.roomNumber),
+    );
+  }, [roomInventory, selectedAvailability, selectedFloor, selectedType]);
 
   const availableVisibleRooms = filteredRooms.filter(
-    (room) => room.status === 'available'
-  ).length
+    (room) => room.status === "available",
+  ).length;
 
   const activeFilterCount =
-    Number(selectedFloor !== 'all') +
-    Number(selectedType !== 'all') +
-    Number(selectedAvailability !== 'all')
+    Number(selectedFloor !== "all") +
+    Number(selectedType !== "all") +
+    Number(selectedAvailability !== "all");
 
   const resetFilters = () => {
-    setSelectedFloor('all')
-    setSelectedType('all')
-    setSelectedAvailability('all')
-  }
+    setSelectedFloor("all");
+    setSelectedType("all");
+    setSelectedAvailability("all");
+  };
 
   const handleCreateRoom = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const roomNumber = createRoomNumber.trim()
-    const floor = Number(createFloor)
+    const roomNumber = createRoomNumber.trim();
+    const floor = Number(createFloor);
 
     if (!roomNumber) {
-      setCreateError('Room number is required.')
-      return
+      setCreateError("Room number is required.");
+      return;
     }
 
     if (!Number.isInteger(floor) || floor < 1) {
-      setCreateError('Floor must be a valid positive number.')
-      return
+      setCreateError("Floor must be a valid positive number.");
+      return;
     }
 
     const roomNumberAlreadyExists = roomInventory.some(
-      (room) => room.roomNumber.toLowerCase() === roomNumber.toLowerCase()
-    )
+      (room) => room.roomNumber.toLowerCase() === roomNumber.toLowerCase(),
+    );
 
     if (roomNumberAlreadyExists) {
-      setCreateError('Room number already exists.')
-      return
+      setCreateError("Room number already exists.");
+      return;
     }
 
     onCreateRoom({
@@ -152,75 +149,77 @@ function RoomsPage({
       typeId: createTypeId,
       status: createStatus,
       images: createImages,
-    })
+    });
 
-    setCreateRoomNumber('')
-    setCreateFloor('')
-    setCreateStatus('available')
-    setCreateTypeId(getDefaultRoomTypeId())
-    setCreateImageUrlInput('')
-    setCreateImages([])
-    setCreateError('')
-    setIsCreateOpen(false)
-  }
+    setCreateRoomNumber("");
+    setCreateFloor("");
+    setCreateStatus("available");
+    setCreateTypeId(getDefaultRoomTypeId());
+    setCreateImageUrlInput("");
+    setCreateImages([]);
+    setCreateError("");
+    setIsCreateOpen(false);
+  };
 
   const handleCreateImageUrlAdd = () => {
-    const nextImageUrl = createImageUrlInput.trim()
+    const nextImageUrl = createImageUrlInput.trim();
     if (!nextImageUrl) {
-      return
+      return;
     }
 
     if (createImages.includes(nextImageUrl)) {
-      setCreateError('Image already added.')
-      return
+      setCreateError("Image already added.");
+      return;
     }
 
-    setCreateImages((currentImages) => [...currentImages, nextImageUrl])
-    setCreateImageUrlInput('')
-    setCreateError('')
-  }
+    setCreateImages((currentImages) => [...currentImages, nextImageUrl]);
+    setCreateImageUrlInput("");
+    setCreateError("");
+  };
 
   const handleCreateImageUrlKeyDown = (
-    event: KeyboardEvent<HTMLInputElement>
+    event: KeyboardEvent<HTMLInputElement>,
   ) => {
-    if (event.key !== 'Enter') {
-      return
+    if (event.key !== "Enter") {
+      return;
     }
 
-    event.preventDefault()
-    handleCreateImageUrlAdd()
-  }
+    event.preventDefault();
+    handleCreateImageUrlAdd();
+  };
 
   const handleCreateImageRemove = (imageIndex: number) => {
     setCreateImages((currentImages) =>
-      currentImages.filter((_, index) => index !== imageIndex)
-    )
-  }
+      currentImages.filter((_, index) => index !== imageIndex),
+    );
+  };
 
-  const handleCreateImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files ?? [])
-    event.target.value = ''
+  const handleCreateImageUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const uploadedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
 
     if (!uploadedFiles.length) {
-      return
+      return;
     }
 
     try {
-      const uploadedImages = await readFilesAsDataUrls(uploadedFiles)
+      const uploadedImages = await readFilesAsDataUrls(uploadedFiles);
       setCreateImages((currentImages) => {
-        const nextImages = [...currentImages]
+        const nextImages = [...currentImages];
         uploadedImages.forEach((imageUrl) => {
           if (!nextImages.includes(imageUrl)) {
-            nextImages.push(imageUrl)
+            nextImages.push(imageUrl);
           }
-        })
-        return nextImages
-      })
-      setCreateError('')
+        });
+        return nextImages;
+      });
+      setCreateError("");
     } catch {
-      setCreateError('Failed to upload image.')
+      setCreateError("Failed to upload image.");
     }
-  }
+  };
 
   return (
     <section className="rooms-panel">
@@ -228,32 +227,33 @@ function RoomsPage({
         <div>
           <h3>Room Inventory</h3>
           <p className="rooms-subtitle">
-            {filteredRooms.length} rooms shown • {availableVisibleRooms} available
+            {filteredRooms.length} rooms shown • {availableVisibleRooms}{" "}
+            available
           </p>
         </div>
 
         <div className="rooms-actions">
           <button
             type="button"
-            className={`rooms-add-button ${isCreateOpen ? 'active' : ''}`}
+            className={`rooms-add-button ${isCreateOpen ? "active" : ""}`}
             onClick={() => {
-              setIsCreateOpen((currentState) => !currentState)
-              setCreateError('')
+              setIsCreateOpen((currentState) => !currentState);
+              setCreateError("");
             }}
           >
-            {isCreateOpen ? 'Close Form' : 'Add Room'}
+            {isCreateOpen ? "Close Form" : "Add Room"}
           </button>
 
           <div className="rooms-filter-wrap">
             <button
               type="button"
-              className={`rooms-filter-button ${isFilterOpen ? 'active' : ''}`}
+              className={`rooms-filter-button ${isFilterOpen ? "active" : ""}`}
               onClick={() => setIsFilterOpen((currentState) => !currentState)}
               aria-expanded={isFilterOpen}
               aria-controls="rooms-filter-menu"
             >
               Filter
-              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
             </button>
 
             {isFilterOpen ? (
@@ -261,12 +261,14 @@ function RoomsPage({
                 <label className="rooms-filter-field">
                   Floor
                   <select
-                    value={selectedFloor === 'all' ? 'all' : String(selectedFloor)}
+                    value={
+                      selectedFloor === "all" ? "all" : String(selectedFloor)
+                    }
                     onChange={(event) => {
-                      const nextFloor = event.target.value
+                      const nextFloor = event.target.value;
                       setSelectedFloor(
-                        nextFloor === 'all' ? 'all' : Number(nextFloor)
-                      )
+                        nextFloor === "all" ? "all" : Number(nextFloor),
+                      );
                     }}
                   >
                     <option value="all">All floors</option>
@@ -283,10 +285,10 @@ function RoomsPage({
                   <select
                     value={selectedType}
                     onChange={(event) => {
-                      const nextType = event.target.value
+                      const nextType = event.target.value;
                       setSelectedType(
-                        nextType === 'all' ? 'all' : (nextType as RoomTypeId)
-                      )
+                        nextType === "all" ? "all" : (nextType as RoomTypeId),
+                      );
                     }}
                   >
                     <option value="all">All room types</option>
@@ -303,12 +305,12 @@ function RoomsPage({
                   <select
                     value={selectedAvailability}
                     onChange={(event) => {
-                      const nextAvailability = event.target.value
+                      const nextAvailability = event.target.value;
                       setSelectedAvailability(
-                        nextAvailability === 'all'
-                          ? 'all'
-                          : (nextAvailability as RoomAvailabilityStatus)
-                      )
+                        nextAvailability === "all"
+                          ? "all"
+                          : (nextAvailability as RoomAvailabilityStatus),
+                      );
                     }}
                   >
                     {availabilityOptions.map((option) => (
@@ -358,7 +360,9 @@ function RoomsPage({
             Room type
             <select
               value={createTypeId}
-              onChange={(event) => setCreateTypeId(event.target.value as RoomTypeId)}
+              onChange={(event) =>
+                setCreateTypeId(event.target.value as RoomTypeId)
+              }
             >
               {rooms.map((roomType) => (
                 <option key={roomType.id} value={roomType.id}>
@@ -377,7 +381,7 @@ function RoomsPage({
               }
             >
               {availabilityOptions
-                .filter((option) => option.value !== 'all')
+                .filter((option) => option.value !== "all")
                 .map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -394,10 +398,10 @@ function RoomsPage({
               type="button"
               className="rooms-create-cancel"
               onClick={() => {
-                setIsCreateOpen(false)
-                setCreateImageUrlInput('')
-                setCreateImages([])
-                setCreateError('')
+                setIsCreateOpen(false);
+                setCreateImageUrlInput("");
+                setCreateImages([]);
+                setCreateError("");
               }}
             >
               Cancel
@@ -445,7 +449,10 @@ function RoomsPage({
           {createImages.length ? (
             <div className="rooms-image-list">
               {createImages.map((imageUrl, imageIndex) => (
-                <figure key={`${imageUrl}-${imageIndex}`} className="rooms-image-item">
+                <figure
+                  key={`${imageUrl}-${imageIndex}`}
+                  className="rooms-image-item"
+                >
                   <img
                     className="rooms-image-preview"
                     src={imageUrl}
@@ -463,16 +470,18 @@ function RoomsPage({
             </div>
           ) : null}
 
-          {createError ? <p className="rooms-form-error">{createError}</p> : null}
+          {createError ? (
+            <p className="rooms-form-error">{createError}</p>
+          ) : null}
         </form>
       ) : null}
 
       {filteredRooms.length ? (
         <div className="rooms-grid">
           {filteredRooms.map((room) => {
-            const roomType = rooms.find((item) => item.id === room.typeId)
+            const roomType = rooms.find((item) => item.id === room.typeId);
             if (!roomType) {
-              return null
+              return null;
             }
 
             return (
@@ -500,7 +509,7 @@ function RoomsPage({
                 </small>
                 <span className="room-detail-link">View full details</span>
               </button>
-            )
+            );
           })}
         </div>
       ) : (
@@ -509,7 +518,7 @@ function RoomsPage({
         </p>
       )}
     </section>
-  )
+  );
 }
 
-export default RoomsPage
+export default RoomsPage;

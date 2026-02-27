@@ -3,7 +3,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   useState,
-} from 'react'
+} from "react";
 import {
   getRoomById,
   rooms,
@@ -11,36 +11,36 @@ import {
   type RoomInventoryId,
   type RoomInventoryItem,
   type RoomTypeId,
-} from '../data/rooms'
+} from "../data/rooms";
 
-type RoomMutationInput = Omit<RoomInventoryItem, 'id'>
+type RoomMutationInput = Omit<RoomInventoryItem, "id">;
 
 type RoomDetailPageProps = {
-  roomInventory: RoomInventoryItem[]
-  roomId: RoomInventoryId
-  onUpdateRoom: (roomId: RoomInventoryId, roomInput: RoomMutationInput) => void
-  onDeleteRoom: (roomId: RoomInventoryId) => void
-  onBackToRooms: () => void
-}
+  roomInventory: RoomInventoryItem[];
+  roomId: RoomInventoryId;
+  onUpdateRoom: (roomId: RoomInventoryId, roomInput: RoomMutationInput) => void;
+  onDeleteRoom: (roomId: RoomInventoryId) => void;
+  onBackToRooms: () => void;
+};
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
-    const fileReader = new FileReader()
+    const fileReader = new FileReader();
     fileReader.onload = () => {
-      if (typeof fileReader.result === 'string') {
-        resolve(fileReader.result)
-        return
+      if (typeof fileReader.result === "string") {
+        resolve(fileReader.result);
+        return;
       }
 
-      reject(new Error('Failed to read file as data URL'))
-    }
+      reject(new Error("Failed to read file as data URL"));
+    };
     fileReader.onerror = () =>
-      reject(new Error(`Failed to read "${file.name}"`))
-    fileReader.readAsDataURL(file)
-  })
+      reject(new Error(`Failed to read "${file.name}"`));
+    fileReader.readAsDataURL(file);
+  });
 
 const readFilesAsDataUrls = async (files: File[]) =>
-  Promise.all(files.map(readFileAsDataUrl))
+  Promise.all(files.map(readFileAsDataUrl));
 
 function RoomDetailPage({
   roomInventory,
@@ -49,17 +49,17 @@ function RoomDetailPage({
   onDeleteRoom,
   onBackToRooms,
 }: RoomDetailPageProps) {
-  const room = roomInventory.find((roomItem) => roomItem.id === roomId)
-  const [isEditing, setIsEditing] = useState(false)
-  const [draftRoomNumber, setDraftRoomNumber] = useState('')
-  const [draftFloor, setDraftFloor] = useState('')
-  const [draftTypeId, setDraftTypeId] = useState<RoomTypeId>('standard-room')
+  const room = roomInventory.find((roomItem) => roomItem.id === roomId);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftRoomNumber, setDraftRoomNumber] = useState("");
+  const [draftFloor, setDraftFloor] = useState("");
+  const [draftTypeId, setDraftTypeId] = useState<RoomTypeId>("standard-room");
   const [draftStatus, setDraftStatus] =
-    useState<RoomAvailabilityStatus>('available')
-  const [draftImageUrlInput, setDraftImageUrlInput] = useState('')
-  const [draftImages, setDraftImages] = useState<string[]>([])
-  const [activeImageIndex, setActiveImageIndex] = useState(0)
-  const [editError, setEditError] = useState('')
+    useState<RoomAvailabilityStatus>("available");
+  const [draftImageUrlInput, setDraftImageUrlInput] = useState("");
+  const [draftImages, setDraftImages] = useState<string[]>([]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [editError, setEditError] = useState("");
 
   if (!room) {
     return (
@@ -68,14 +68,18 @@ function RoomDetailPage({
         <p className="room-detail-description">
           The selected room is not available.
         </p>
-        <button type="button" className="room-back-button" onClick={onBackToRooms}>
+        <button
+          type="button"
+          className="room-back-button"
+          onClick={onBackToRooms}
+        >
           Back to Rooms
         </button>
       </section>
-    )
+    );
   }
 
-  const roomType = getRoomById(room.typeId)
+  const roomType = getRoomById(room.typeId);
 
   if (!roomType) {
     return (
@@ -84,43 +88,48 @@ function RoomDetailPage({
         <p className="room-detail-description">
           The selected room details are unavailable.
         </p>
-        <button type="button" className="room-back-button" onClick={onBackToRooms}>
+        <button
+          type="button"
+          className="room-back-button"
+          onClick={onBackToRooms}
+        >
           Back to Rooms
         </button>
       </section>
-    )
+    );
   }
 
-  const roomStatusLabel = room.status === 'available' ? 'Available' : 'Occupied'
-  const roomImages = room.images?.length ? room.images : [roomType.image]
+  const roomStatusLabel =
+    room.status === "available" ? "Available" : "Occupied";
+  const roomImages = room.images?.length ? room.images : [roomType.image];
   const activeRoomImage =
-    roomImages[activeImageIndex] ?? roomImages[0] ?? roomType.image
+    roomImages[activeImageIndex] ?? roomImages[0] ?? roomType.image;
 
   const handleUpdateSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const roomNumber = draftRoomNumber.trim()
-    const floor = Number(draftFloor)
+    const roomNumber = draftRoomNumber.trim();
+    const floor = Number(draftFloor);
 
     if (!roomNumber) {
-      setEditError('Room number is required.')
-      return
+      setEditError("Room number is required.");
+      return;
     }
 
     if (!Number.isInteger(floor) || floor < 1) {
-      setEditError('Floor must be a valid positive number.')
-      return
+      setEditError("Floor must be a valid positive number.");
+      return;
     }
 
     const roomNumberAlreadyExists = roomInventory.some(
       (roomItem) =>
         roomItem.id !== room.id &&
-        roomItem.roomNumber.toLowerCase() === roomNumber.toLowerCase()
-    )
+        roomItem.roomNumber.toLowerCase() === roomNumber.toLowerCase(),
+    );
 
     if (roomNumberAlreadyExists) {
-      setEditError('Room number already exists.')
-      return
+      setEditError("Room number already exists.");
+      return;
     }
 
     onUpdateRoom(room.id, {
@@ -129,82 +138,84 @@ function RoomDetailPage({
       typeId: draftTypeId,
       status: draftStatus,
       images: draftImages,
-    })
+    });
 
-    setEditError('')
-    setIsEditing(false)
-  }
+    setEditError("");
+    setIsEditing(false);
+  };
 
   const handleEditImageUrlAdd = () => {
-    const nextImageUrl = draftImageUrlInput.trim()
+    const nextImageUrl = draftImageUrlInput.trim();
     if (!nextImageUrl) {
-      return
+      return;
     }
 
     if (draftImages.includes(nextImageUrl)) {
-      setEditError('Image already added.')
-      return
+      setEditError("Image already added.");
+      return;
     }
 
-    setDraftImages((currentImages) => [...currentImages, nextImageUrl])
-    setDraftImageUrlInput('')
-    setEditError('')
-  }
+    setDraftImages((currentImages) => [...currentImages, nextImageUrl]);
+    setDraftImageUrlInput("");
+    setEditError("");
+  };
 
   const handleEditImageUrlKeyDown = (
-    event: KeyboardEvent<HTMLInputElement>
+    event: KeyboardEvent<HTMLInputElement>,
   ) => {
-    if (event.key !== 'Enter') {
-      return
+    if (event.key !== "Enter") {
+      return;
     }
 
-    event.preventDefault()
-    handleEditImageUrlAdd()
-  }
+    event.preventDefault();
+    handleEditImageUrlAdd();
+  };
 
   const handleEditImageRemove = (imageIndex: number) => {
     setDraftImages((currentImages) =>
-      currentImages.filter((_, index) => index !== imageIndex)
-    )
-  }
+      currentImages.filter((_, index) => index !== imageIndex),
+    );
+  };
 
-  const handleEditImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files ?? [])
-    event.target.value = ''
+  const handleEditImageUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const uploadedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
 
     if (!uploadedFiles.length) {
-      return
+      return;
     }
 
     try {
-      const uploadedImages = await readFilesAsDataUrls(uploadedFiles)
+      const uploadedImages = await readFilesAsDataUrls(uploadedFiles);
       setDraftImages((currentImages) => {
-        const nextImages = [...currentImages]
+        const nextImages = [...currentImages];
         uploadedImages.forEach((imageUrl) => {
           if (!nextImages.includes(imageUrl)) {
-            nextImages.push(imageUrl)
+            nextImages.push(imageUrl);
           }
-        })
-        return nextImages
-      })
-      setEditError('')
+        });
+        return nextImages;
+      });
+      setEditError("");
     } catch {
-      setEditError('Failed to upload image.')
+      setEditError("Failed to upload image.");
     }
-  }
+  };
 
   const handleDeleteRoom = () => {
     const shouldDeleteRoom = window.confirm(
-      `Delete room ${room.roomNumber}? This action cannot be undone.`
-    )
+      `Delete room ${room.roomNumber}? This action cannot be undone.`,
+    );
 
     if (!shouldDeleteRoom) {
-      return
+      return;
     }
 
-    onDeleteRoom(room.id)
-    onBackToRooms()
-  }
+    onDeleteRoom(room.id);
+    onBackToRooms();
+  };
 
   return (
     <section className="room-detail-panel">
@@ -212,10 +223,16 @@ function RoomDetailPage({
         <div>
           <p className="room-detail-eyebrow">Room {room.roomNumber}</p>
           <h3>{roomType.type}</h3>
-          <span className={`room-status-chip ${room.status}`}>{roomStatusLabel}</span>
+          <span className={`room-status-chip ${room.status}`}>
+            {roomStatusLabel}
+          </span>
         </div>
         <div className="room-detail-actions">
-          <button type="button" className="room-back-button" onClick={onBackToRooms}>
+          <button
+            type="button"
+            className="room-back-button"
+            onClick={onBackToRooms}
+          >
             Back to Rooms
           </button>
           <button
@@ -223,23 +240,23 @@ function RoomDetailPage({
             className="room-edit-button"
             onClick={() => {
               if (isEditing) {
-                setIsEditing(false)
-                setEditError('')
-                return
+                setIsEditing(false);
+                setEditError("");
+                return;
               }
 
-              setDraftRoomNumber(room.roomNumber)
-              setDraftFloor(String(room.floor))
-              setDraftTypeId(room.typeId)
-              setDraftStatus(room.status)
-              setDraftImages(room.images ? [...room.images] : [])
-              setDraftImageUrlInput('')
-              setActiveImageIndex(0)
-              setIsEditing(true)
-              setEditError('')
+              setDraftRoomNumber(room.roomNumber);
+              setDraftFloor(String(room.floor));
+              setDraftTypeId(room.typeId);
+              setDraftStatus(room.status);
+              setDraftImages(room.images ? [...room.images] : []);
+              setDraftImageUrlInput("");
+              setActiveImageIndex(0);
+              setIsEditing(true);
+              setEditError("");
             }}
           >
-            {isEditing ? 'Cancel Edit' : 'Edit Room'}
+            {isEditing ? "Cancel Edit" : "Edit Room"}
           </button>
           <button
             type="button"
@@ -297,7 +314,7 @@ function RoomDetailPage({
                 <button
                   key={`${imageUrl}-${imageIndex}`}
                   type="button"
-                  className={`room-image-thumb-button ${imageIndex === activeImageIndex ? 'active' : ''}`}
+                  className={`room-image-thumb-button ${imageIndex === activeImageIndex ? "active" : ""}`}
                   onClick={() => setActiveImageIndex(imageIndex)}
                   aria-label={`View room image ${imageIndex + 1}`}
                 >
@@ -313,7 +330,7 @@ function RoomDetailPage({
 
           {isEditing ? (
             <form className="room-edit-form" onSubmit={handleUpdateSubmit}>
-              <h4>Edit Room</h4>
+              <h4></h4>
 
               <div className="room-edit-grid">
                 <label className="room-edit-field">
@@ -355,7 +372,9 @@ function RoomDetailPage({
                   <select
                     value={draftStatus}
                     onChange={(event) =>
-                      setDraftStatus(event.target.value as RoomAvailabilityStatus)
+                      setDraftStatus(
+                        event.target.value as RoomAvailabilityStatus,
+                      )
                     }
                   >
                     <option value="available">Available</option>
@@ -368,7 +387,9 @@ function RoomDetailPage({
                   <div className="room-image-url-row">
                     <input
                       value={draftImageUrlInput}
-                      onChange={(event) => setDraftImageUrlInput(event.target.value)}
+                      onChange={(event) =>
+                        setDraftImageUrlInput(event.target.value)
+                      }
                       onKeyDown={handleEditImageUrlKeyDown}
                       placeholder="https://example.com/room.jpg"
                     />
@@ -434,18 +455,20 @@ function RoomDetailPage({
                   type="button"
                   className="room-edit-cancel"
                   onClick={() => {
-                    setIsEditing(false)
-                    setEditError('')
-                    setDraftImageUrlInput('')
-                    setDraftImages([])
-                    setActiveImageIndex(0)
+                    setIsEditing(false);
+                    setEditError("");
+                    setDraftImageUrlInput("");
+                    setDraftImages([]);
+                    setActiveImageIndex(0);
                   }}
                 >
                   Cancel
                 </button>
               </div>
 
-              {editError ? <p className="room-form-error">{editError}</p> : null}
+              {editError ? (
+                <p className="room-form-error">{editError}</p>
+              ) : null}
             </form>
           ) : null}
 
@@ -460,7 +483,7 @@ function RoomDetailPage({
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-export default RoomDetailPage
+export default RoomDetailPage;

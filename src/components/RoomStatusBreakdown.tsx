@@ -1,28 +1,28 @@
 type RoomStatusBreakdownProps = {
-  available: number
-  occupied: number
-  maintenance: number
-}
+  available: number;
+  occupied: number;
+  maintenance: number;
+};
 
 function RoomStatusBreakdown({
   available,
   occupied,
   maintenance,
 }: RoomStatusBreakdownProps) {
-  const totalRooms = available + occupied + maintenance
+  const totalRooms = available + occupied + maintenance;
 
   const statusRows = [
-    { key: 'available', label: 'Available', count: available },
-    { key: 'occupied', label: 'Occupied', count: occupied },
-    { key: 'maintenance', label: 'Maintenance', count: maintenance },
-  ] as const
+    { key: "available", label: "Available", count: available },
+    { key: "occupied", label: "Occupied", count: occupied },
+    { key: "maintenance", label: "Maintenance", count: maintenance },
+  ] as const;
 
   return (
     <div className="room-status-breakdown">
       {statusRows.map((statusRow) => {
         const percentage = totalRooms
           ? Math.round((statusRow.count / totalRooms) * 100)
-          : 0
+          : 0;
 
         return (
           <article key={statusRow.key} className="room-status-row">
@@ -40,10 +40,10 @@ function RoomStatusBreakdown({
               />
             </div>
           </article>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
-export default RoomStatusBreakdown
+export default RoomStatusBreakdown;
