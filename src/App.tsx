@@ -1,28 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
-import BillingCheckoutPage from "./pages/BillingCheckoutPage";
-import BookingManagementPage from "./pages/BookingManagementPage";
-import DashboardOverviewPage from "./pages/DashboardOverviewPage";
-import InStayServicesPage from "./pages/InStayServicesPage";
-import ReportsPage from "./pages/ReportsPage";
-import RoomManagementPage from "./pages/RoomManagementPage";
-import SettingsPage from "./pages/SettingsPage";
-import AdminLayout from "./layout/AdminLayout";
+import { type FormEvent, useEffect, useState } from "react";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
+import { useAuth } from "./context/useAuth";
+import {
+  bookingsMock,
+  guestsMock,
+  type BookingStatus,
+} from "./data/hmsMockData";
 import useRooms from "./hooks/useRooms";
+import AdminLayout from "./layout/AdminLayout";
 import {
   getAdminRouteTitle,
   isAdminRoute,
   type AdminRoute,
 } from "./layout/adminRoutes";
-import {
-  bookingsMock,
-  guestsMock,
-  serviceCatalogMock,
-  serviceChargesMock,
-  toLocalIsoDate,
-  type BookingStatus,
-} from "./data/hmsMockData";
+import BookingManagementPage from "./pages/BookingManagementPage";
+import DashboardOverviewPage from "./pages/DashboardOverviewPage";
+import RoomManagementPage from "./pages/RoomManagementPage";
 import type { RoomPayload } from "./services/roomService";
+import "./App.css";
 import "./styles/admin.css";
+
+type AuthScreen = "login" | "register";
 
 const getInitialRoute = (): AdminRoute => {
   const { pathname } = window.location;
@@ -41,6 +41,10 @@ const getRouteFromPath = (): AdminRoute => {
 
 function App() {
   const [route, setRoute] = useState<AdminRoute>(getInitialRoute);
+  const [authScreen, setAuthScreen] = useState<AuthScreen>("login");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const { login, register, logout } = useAuth();
+
   const {
     rooms,
     isLoading: isRoomsLoading,
@@ -53,7 +57,6 @@ function App() {
   } = useRooms();
   const [guests] = useState(guestsMock);
   const [bookings, setBookings] = useState(bookingsMock);
-  const [serviceCharges, setServiceCharges] = useState(serviceChargesMock);
 
   useEffect(() => {
     const handlePopState = () => setRoute(getRouteFromPath());
@@ -70,14 +73,6 @@ function App() {
     setRoute(nextRoute);
   };
 
-  const serviceById = useMemo(
-    () =>
-      new Map(
-        serviceCatalogMock.map((service) => [service.id, service] as const),
-      ),
-    [],
-  );
-
   const handleUpdateBookingStatus = (
     bookingId: number,
     nextStatus: BookingStatus,
@@ -87,31 +82,6 @@ function App() {
         booking.id === bookingId ? { ...booking, status: nextStatus } : booking,
       ),
     );
-  };
-
-  const handleAddServiceCharge = (payload: {
-    bookingId: number;
-    serviceId: number;
-    quantity: number;
-  }) => {
-    const service = serviceById.get(payload.serviceId);
-    if (!service) {
-      return;
-    }
-
-    setServiceCharges((currentCharges) => [
-      ...currentCharges,
-      {
-        id: currentCharges.length
-          ? Math.max(...currentCharges.map((charge) => charge.id)) + 1
-          : 1,
-        bookingId: payload.bookingId,
-        serviceId: payload.serviceId,
-        quantity: payload.quantity,
-        amount: service.unitPrice * payload.quantity,
-        chargedAt: toLocalIsoDate(new Date()),
-      },
-    ]);
   };
 
   const handleCreateRoom = async (payload: RoomPayload) => {
@@ -130,13 +100,82 @@ function App() {
     await bulkDeleteRooms(roomIds);
   };
 
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+
+    try {
+      await login(email, password);
+      setAuthError(null);
+      event.currentTarget.reset();
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Unable to log in.",
+      );
+    }
+  };
+
+  const handleRegisterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      await register({
+        fullName: String(formData.get("fullName") ?? ""),
+        email: String(formData.get("email") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        confirmPassword: String(formData.get("confirmPassword") ?? ""),
+      });
+      setAuthError(null);
+      event.currentTarget.reset();
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Unable to register admin.",
+      );
+    }
+  };
+
+  const handleSwitchToRegister = () => {
+    setAuthError(null);
+    setAuthScreen("register");
+  };
+
+  const handleSwitchToLogin = () => {
+    setAuthError(null);
+    setAuthScreen("login");
+  };
+
+  const handleLogout = () => {
+    logout();
+    setAuthError(null);
+    setAuthScreen("login");
+  };
+
+  const authFallback =
+    authScreen === "login" ? (
+      <LoginPage
+        onSubmit={handleLoginSubmit}
+        onGoToRegister={handleSwitchToRegister}
+        errorMessage={authError}
+      />
+    ) : (
+      <RegisterPage
+        onSubmit={handleRegisterSubmit}
+        onGoToLogin={handleSwitchToLogin}
+        errorMessage={authError}
+      />
+    );
+
   const pageContent =
     route === "/dashboard" ? (
       <DashboardOverviewPage
         rooms={rooms}
         bookings={bookings}
         guests={guests}
-        serviceCharges={serviceCharges}
+        serviceCharges={[]}
       />
     ) : route === "/rooms" ? (
       <RoomManagementPage
@@ -155,40 +194,19 @@ function App() {
         guests={guests}
         onUpdateBookingStatus={handleUpdateBookingStatus}
       />
-    ) : route === "/services" ? (
-      <InStayServicesPage
-        bookings={bookings}
-        guests={guests}
-        serviceCatalog={serviceCatalogMock}
-        serviceCharges={serviceCharges}
-        onAddServiceCharge={handleAddServiceCharge}
-      />
-    ) : route === "/billing" ? (
-      <BillingCheckoutPage
-        bookings={bookings}
-        guests={guests}
-        serviceCatalog={serviceCatalogMock}
-        serviceCharges={serviceCharges}
-        onUpdateBookingStatus={handleUpdateBookingStatus}
-      />
-    ) : route === "/reports" ? (
-      <ReportsPage
-        rooms={rooms}
-        bookings={bookings}
-        serviceCharges={serviceCharges}
-      />
-    ) : (
-      <SettingsPage />
-    );
+    ) : null;
 
   return (
-    <AdminLayout
-      currentRoute={route}
-      pageTitle={getAdminRouteTitle(route)}
-      onNavigate={navigate}
-    >
-      {pageContent}
-    </AdminLayout>
+    <ProtectedRoute fallback={authFallback}>
+      <AdminLayout
+        currentRoute={route}
+        pageTitle={getAdminRouteTitle(route)}
+        onNavigate={navigate}
+        onLogout={handleLogout}
+      >
+        {pageContent}
+      </AdminLayout>
+    </ProtectedRoute>
   );
 }
 

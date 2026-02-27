@@ -77,6 +77,14 @@ body {
   gap: 0.8rem;
 }
 
+.hms-header-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
 .hms-header h2 {
   margin: 0.28rem 0 0;
   font-size: 1.55rem;
@@ -138,6 +146,20 @@ body {
 .hms-content {
   display: grid;
   gap: 0.9rem;
+}
+
+.hms-logout {
+  border: 1px solid #c6d4ea;
+  border-radius: 0.56rem;
+  background: #fff;
+  color: #21446f;
+  font-weight: 600;
+  padding: 0.42rem 0.64rem;
+  cursor: pointer;
+}
+
+.hms-logout:hover {
+  border-color: #95b3db;
 }
 
 .hms-page-stack {
@@ -779,6 +801,10 @@ body {
 
   .hms-header {
     flex-direction: column;
+  }
+
+  .hms-header-actions {
+    width: 100%;
   }
 
   .hms-form-grid {

@@ -24,18 +24,13 @@ const currencyFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 0,
 });
 
-const csvEscape = (value: string | number) =>
-  `"${String(value).replace(/"/g, '""')}"`;
-
 function RoomList({
   rooms,
   isLoading,
-  isBulkDeleting,
   onAddNew,
   onView,
   onEdit,
   onDelete,
-  onBulkDelete,
 }: RoomListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | RoomType>("all");
@@ -43,12 +38,6 @@ function RoomList({
   const [sortField, setSortField] = useState<RoomSortField>("roomNumber");
   const [sortDirection, setSortDirection] = useState<RoomSortDirection>("asc");
   const [page, setPage] = useState(1);
-  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
-
-  const selectedIdSet = useMemo(
-    () => new Set(selectedRoomIds),
-    [selectedRoomIds],
-  );
 
   const filteredRooms = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -91,17 +80,6 @@ function RoomList({
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const paginatedRooms = sortedRooms.slice(startIndex, startIndex + PAGE_SIZE);
 
-  const allCurrentPageSelected =
-    paginatedRooms.length > 0 &&
-    paginatedRooms.every((room) => selectedIdSet.has(room.id));
-
-  const selectedCount = selectedRoomIds.filter((roomId) =>
-    rooms.some((room) => room.id === roomId),
-  ).length;
-  const selectedValidRoomIds = selectedRoomIds.filter((roomId) =>
-    rooms.some((room) => room.id === roomId),
-  );
-
   const toggleSort = (field: RoomSortField) => {
     if (sortField === field) {
       setSortDirection((currentDirection) =>
@@ -112,68 +90,6 @@ function RoomList({
 
     setSortField(field);
     setSortDirection("asc");
-  };
-
-  const handleToggleRoom = (roomId: number) => {
-    setSelectedRoomIds((currentIds) =>
-      currentIds.includes(roomId)
-        ? currentIds.filter((id) => id !== roomId)
-        : [...currentIds, roomId],
-    );
-  };
-
-  const handleToggleAllInPage = () => {
-    const pageIds = paginatedRooms.map((room) => room.id);
-    if (!pageIds.length) {
-      return;
-    }
-
-    if (allCurrentPageSelected) {
-      setSelectedRoomIds((currentIds) =>
-        currentIds.filter((roomId) => !pageIds.includes(roomId)),
-      );
-      return;
-    }
-
-    setSelectedRoomIds((currentIds) => {
-      const idSet = new Set(currentIds);
-      pageIds.forEach((roomId) => idSet.add(roomId));
-      return [...idSet];
-    });
-  };
-
-  const handleExportCsv = () => {
-    const headers = [
-      "Room ID",
-      "Room Number",
-      "Room Type",
-      "Capacity",
-      "Price/Night",
-      "Status",
-      "Amenities",
-      "Images",
-    ];
-    const csvRows = sortedRooms.map((room) =>
-      [
-        csvEscape(room.id),
-        csvEscape(room.roomNumber),
-        csvEscape(room.roomType),
-        csvEscape(room.capacity),
-        csvEscape(room.pricePerNight),
-        csvEscape(room.status),
-        csvEscape(room.amenities.join("|")),
-        csvEscape(room.images.join("|")),
-      ].join(","),
-    );
-
-    const csvContent = [headers.join(","), ...csvRows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const exportUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = exportUrl;
-    anchor.download = `rooms-export-${Date.now()}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(exportUrl);
   };
 
   return (
@@ -187,21 +103,6 @@ function RoomList({
             onClick={onAddNew}
           >
             Add New Room
-          </button>
-          <button
-            type="button"
-            className="hms-ghost-button"
-            onClick={handleExportCsv}
-          >
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="hms-ghost-button"
-            onClick={() => onBulkDelete(selectedValidRoomIds)}
-            disabled={!selectedCount || isBulkDeleting}
-          >
-            {isBulkDeleting ? "Deleting..." : `Bulk Delete (${selectedCount})`}
           </button>
         </div>
       </div>
@@ -277,14 +178,6 @@ function RoomList({
           <table className="hms-table">
             <thead>
               <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    checked={allCurrentPageSelected}
-                    onChange={handleToggleAllInPage}
-                    aria-label="Select all rooms on current page"
-                  />
-                </th>
                 <th>Image</th>
                 <th>Room ID</th>
                 <th>Room Number</th>
@@ -300,14 +193,6 @@ function RoomList({
               {paginatedRooms.length ? (
                 paginatedRooms.map((room) => (
                   <tr key={room.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedIdSet.has(room.id)}
-                        onChange={() => handleToggleRoom(room.id)}
-                        aria-label={`Select room ${room.roomNumber}`}
-                      />
-                    </td>
                     <td>
                       <img
                         className="hms-room-thumb"
