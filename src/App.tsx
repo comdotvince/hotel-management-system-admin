@@ -1,5 +1,4 @@
 import { type FormEvent, useEffect, useState } from "react";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import { useAuth } from "./context/useAuth";
@@ -13,37 +12,31 @@ import AdminLayout from "./layout/AdminLayout";
 import {
   getAdminRouteTitle,
   isAdminRoute,
-  type AdminRoute,
+  isAuthRoute,
+  type AppRoute,
 } from "./layout/adminRoutes";
 import BookingManagementPage from "./pages/BookingManagementPage";
 import DashboardOverviewPage from "./pages/DashboardOverviewPage";
 import RoomManagementPage from "./pages/RoomManagementPage";
 import type { RoomPayload } from "./services/roomService";
-import "./App.css";
+import "./styles/tokens.css";
+import "./components/Dashboard/Dashboard.css";
+import "./components/Rooms/Rooms.css";
+import "./components/Booking/Booking.css";
 import "./styles/admin.css";
 
-type AuthScreen = "login" | "register";
-
-const getInitialRoute = (): AdminRoute => {
-  const { pathname } = window.location;
-  if (isAdminRoute(pathname)) {
-    return pathname;
-  }
-
-  window.history.replaceState({}, "", "/dashboard");
-  return "/dashboard";
-};
-
-const getRouteFromPath = (): AdminRoute => {
-  const { pathname } = window.location;
-  return isAdminRoute(pathname) ? pathname : "/dashboard";
+const resolveRoute = (pathname: string): AppRoute => {
+  if (isAuthRoute(pathname)) return pathname;
+  if (isAdminRoute(pathname)) return pathname;
+  return "/login";
 };
 
 function App() {
-  const [route, setRoute] = useState<AdminRoute>(getInitialRoute);
-  const [authScreen, setAuthScreen] = useState<AuthScreen>("login");
+  const { isAuthenticated, login, register, logout } = useAuth();
+  const [route, setRoute] = useState<AppRoute>(() =>
+    resolveRoute(window.location.pathname),
+  );
   const [authError, setAuthError] = useState<string | null>(null);
-  const { login, register, logout } = useAuth();
 
   const {
     rooms,
@@ -58,21 +51,52 @@ function App() {
   const [guests] = useState(guestsMock);
   const [bookings, setBookings] = useState(bookingsMock);
 
-  useEffect(() => {
-    const handlePopState = () => setRoute(getRouteFromPath());
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  const navigate = (nextRoute: AdminRoute) => {
+  const navigate = (nextRoute: AppRoute) => {
     if (window.location.pathname !== nextRoute) {
       window.history.pushState({}, "", nextRoute);
     }
-
     setRoute(nextRoute);
   };
 
+  /* ── Compute effective route (redirect if auth state mismatches) ── */
+  let effectiveRoute: AppRoute = route;
+  if (isAuthenticated && isAuthRoute(route)) {
+    effectiveRoute = "/dashboard";
+  } else if (!isAuthenticated && isAdminRoute(route)) {
+    effectiveRoute = "/login";
+  }
+
+  /* ── Keep URL bar in sync when redirecting ── */
+  useEffect(() => {
+    if (window.location.pathname !== effectiveRoute) {
+      window.history.replaceState({}, "", effectiveRoute);
+    }
+  }, [effectiveRoute]);
+
+  /* ── Browser back / forward ── */
+  useEffect(() => {
+    const handlePopState = () => {
+      const next = resolveRoute(window.location.pathname);
+
+      if (isAuthenticated && isAuthRoute(next)) {
+        window.history.replaceState({}, "", "/dashboard");
+        setRoute("/dashboard");
+        return;
+      }
+      if (!isAuthenticated && isAdminRoute(next)) {
+        window.history.replaceState({}, "", "/login");
+        setRoute("/login");
+        return;
+      }
+
+      setRoute(next);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isAuthenticated]);
+
+  /* ── Booking status update ── */
   const handleUpdateBookingStatus = (
     bookingId: number,
     nextStatus: BookingStatus,
@@ -84,6 +108,7 @@ function App() {
     );
   };
 
+  /* ── Room CRUD ── */
   const handleCreateRoom = async (payload: RoomPayload) => {
     await createRoom(payload);
   };
@@ -100,6 +125,7 @@ function App() {
     await bulkDeleteRooms(roomIds);
   };
 
+  /* ── Auth handlers ── */
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -140,44 +166,53 @@ function App() {
 
   const handleSwitchToRegister = () => {
     setAuthError(null);
-    setAuthScreen("register");
+    navigate("/register");
   };
 
   const handleSwitchToLogin = () => {
     setAuthError(null);
-    setAuthScreen("login");
+    navigate("/login");
   };
 
   const handleLogout = () => {
     logout();
     setAuthError(null);
-    setAuthScreen("login");
+    navigate("/login");
   };
 
-  const authFallback =
-    authScreen === "login" ? (
+  /* ── Auth screens (unauthenticated) ── */
+  if (!isAuthenticated) {
+    if (effectiveRoute === "/register") {
+      return (
+        <RegisterPage
+          onSubmit={handleRegisterSubmit}
+          onGoToLogin={handleSwitchToLogin}
+          errorMessage={authError}
+        />
+      );
+    }
+
+    return (
       <LoginPage
         onSubmit={handleLoginSubmit}
         onGoToRegister={handleSwitchToRegister}
         errorMessage={authError}
       />
-    ) : (
-      <RegisterPage
-        onSubmit={handleRegisterSubmit}
-        onGoToLogin={handleSwitchToLogin}
-        errorMessage={authError}
-      />
     );
+  }
+
+  /* ── Authenticated admin pages ── */
+  const adminRoute = isAdminRoute(effectiveRoute) ? effectiveRoute : "/dashboard";
 
   const pageContent =
-    route === "/dashboard" ? (
+    adminRoute === "/dashboard" ? (
       <DashboardOverviewPage
         rooms={rooms}
         bookings={bookings}
         guests={guests}
         serviceCharges={[]}
       />
-    ) : route === "/rooms" ? (
+    ) : adminRoute === "/rooms" ? (
       <RoomManagementPage
         rooms={rooms}
         isLoading={isRoomsLoading}
@@ -188,7 +223,7 @@ function App() {
         onDeleteRoom={handleDeleteRoom}
         onBulkDeleteRooms={handleBulkDeleteRooms}
       />
-    ) : route === "/bookings" ? (
+    ) : adminRoute === "/bookings" ? (
       <BookingManagementPage
         bookings={bookings}
         guests={guests}
@@ -197,16 +232,14 @@ function App() {
     ) : null;
 
   return (
-    <ProtectedRoute fallback={authFallback}>
-      <AdminLayout
-        currentRoute={route}
-        pageTitle={getAdminRouteTitle(route)}
-        onNavigate={navigate}
-        onLogout={handleLogout}
-      >
-        {pageContent}
-      </AdminLayout>
-    </ProtectedRoute>
+    <AdminLayout
+      currentRoute={adminRoute}
+      pageTitle={getAdminRouteTitle(adminRoute)}
+      onNavigate={(r) => navigate(r)}
+      onLogout={handleLogout}
+    >
+      {pageContent}
+    </AdminLayout>
   );
 }
 

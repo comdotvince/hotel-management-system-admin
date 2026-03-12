@@ -25,3 +25,13 @@ export const isAdminRoute = (value: string): value is AdminRoute =>
 
 export const getAdminRouteTitle = (route: AdminRoute) =>
   adminNavigation.find((item) => item.path === route)?.title ?? "Admin";
+
+/* ── Auth routes ── */
+export type AuthRoute = "/login" | "/register";
+
+const authRouteSet = new Set<string>(["/login", "/register"]);
+
+export const isAuthRoute = (value: string): value is AuthRoute =>
+  authRouteSet.has(value);
+
+export type AppRoute = AdminRoute | AuthRoute;

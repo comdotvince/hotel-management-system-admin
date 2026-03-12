@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════
+   REGISTER PAGE — BLENDED IMAGE
+   ═══════════════════════════════════════════ */
+.auth-visual--blend {
+  position: relative;
+  padding: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+}
+
+.auth-visual--blend img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
+  opacity: 0.35;
+  mix-blend-mode: luminosity;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 15%,
+    black 70%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 15%,
+    black 70%,
+    transparent 100%
+  );
+  filter: blur(1px) saturate(0.6);
+}
+
+.auth-visual-overlay {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 3rem;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.1) 0%,
+    rgba(15, 23, 42, 0.6) 60%,
+    rgba(15, 23, 42, 0.85) 100%
+  );
+}
+
+.auth-visual-content {
+  max-width: 380px;
+  animation: auth-fade-up 800ms ease both;
+}
+
+.auth-visual-badge {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  color: #93c5fd;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.auth-visual-title {
+  margin: 1rem 0 0;
+  color: #fff;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.auth-visual-desc {
+  margin: 0.625rem 0 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+@keyframes auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Register card refinements */
+.auth-card--register {
+  animation: auth-card-enter 600ms ease both;
+}
+
+@keyframes auth-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .auth-visual--blend img {
+    opacity: 0.3;
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 50%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 50%,
+      transparent 100%
+    );
+  }
+
+  .auth-visual-overlay {
+    padding: 1.5rem;
+    align-items: flex-end;
+  }
+
+  .auth-visual-title {
+    font-size: 1.25rem;
+  }
+
+  .auth-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .auth-form-row {
+    grid-template-columns: 1fr;
+  }
+}
