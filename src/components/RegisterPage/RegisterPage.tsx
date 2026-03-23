@@ -1,16 +1,18 @@
-import { type FormEventHandler } from "react";
-import "./RegisterPage.css";
+import { type FormEventHandler } from 'react'
+import './RegisterPage.css'
 
 type RegisterPageProps = {
-  onSubmit: FormEventHandler<HTMLFormElement>;
-  onGoToLogin: () => void;
-  errorMessage?: string | null;
-};
+  onSubmit: FormEventHandler<HTMLFormElement>
+  onGoToLogin: () => void
+  errorMessage?: string | null
+  isLoading?: boolean
+}
 
 function RegisterPage({
   onSubmit,
   onGoToLogin,
   errorMessage,
+  isLoading = false,
 }: RegisterPageProps) {
   return (
     <main className="auth-shell auth-shell--register">
@@ -19,19 +21,6 @@ function RegisterPage({
           src="/ChatGPT Image Feb 17, 2026, 10_29_33 AM.png"
           alt="Hotel admin illustration"
         />
-        {/* <div className="auth-visual-overlay">
-          <div className="auth-visual-content">
-            <h2 className="auth-visual-title">
-              Streamline Your
-              <br />
-              Hotel Operations
-            </h2>
-            <p className="auth-visual-desc">
-              Manage bookings, rooms, and guests — all from one centralized
-              dashboard.
-            </p>
-          </div>
-        </div> */}
       </section>
 
       <section className="auth-panel">
@@ -52,6 +41,7 @@ function RegisterPage({
                 placeholder="Jane Doe"
                 autoComplete="name"
                 required
+                disabled={isLoading}
               />
             </label>
 
@@ -63,6 +53,7 @@ function RegisterPage({
                 placeholder="admin@example.com"
                 autoComplete="email"
                 required
+                disabled={isLoading}
               />
             </label>
 
@@ -75,6 +66,7 @@ function RegisterPage({
                   placeholder="Create password"
                   autoComplete="new-password"
                   required
+                  disabled={isLoading}
                 />
               </label>
 
@@ -86,21 +78,28 @@ function RegisterPage({
                   placeholder="Confirm password"
                   autoComplete="new-password"
                   required
+                  disabled={isLoading}
                 />
               </label>
             </div>
 
-            <button type="submit" className="auth-submit">
-              Create Account
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={isLoading}
+              aria-busy={isLoading}
+            >
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
           <p className="auth-switch">
-            Already registered?{" "}
+            Already registered?{' '}
             <button
               type="button"
               className="switch-button"
               onClick={onGoToLogin}
+              disabled={isLoading}
             >
               Back to Login
             </button>
@@ -108,7 +107,7 @@ function RegisterPage({
         </div>
       </section>
     </main>
-  );
+  )
 }
 
-export default RegisterPage;
+export default RegisterPage

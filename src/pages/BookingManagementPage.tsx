@@ -11,6 +11,8 @@ import type {
 type BookingManagementPageProps = {
   bookings: BookingRecord[]
   guests: GuestRecord[]
+  error?: string | null
+  isLoading?: boolean
   onUpdateBookingStatus: (bookingId: number, status: BookingStatus) => void
 }
 
@@ -36,6 +38,8 @@ type BookingTableRow = BookingRecord & {
 function BookingManagementPage({
   bookings,
   guests,
+  error,
+  isLoading = false,
   onUpdateBookingStatus,
 }: BookingManagementPageProps) {
   const [sortField, setSortField] = useState<BookingSortField>('check-in')
@@ -50,7 +54,7 @@ function BookingManagementPage({
   const sortedBookings: BookingTableRow[] = useMemo(() => {
     const bookingRows = bookings.map((booking) => ({
       ...booking,
-      guestName: guestNameById.get(booking.guestId) ?? 'Unknown guest',
+      guestName: guestNameById.get(booking.guestId) ?? `Guest #${booking.guestId}`,
     }))
 
     bookingRows.sort((firstBooking, secondBooking) => {
@@ -116,6 +120,12 @@ function BookingManagementPage({
 
   return (
     <div className="hms-page-stack">
+      {error ? (
+        <section className="hms-panel">
+          <p className="hms-field-error">{error}</p>
+        </section>
+      ) : null}
+
       <section className="hms-panel">
         <div className="hms-panel-head">
           <h3>Bookings</h3>
@@ -142,7 +152,7 @@ function BookingManagementPage({
           columns={columns}
           rows={sortedBookings}
           getRowKey={(booking) => booking.id}
-          emptyMessage="No bookings available."
+          emptyMessage={isLoading ? 'Loading bookings...' : 'No bookings available.'}
           onRowClick={(booking) => setSelectedBookingId(booking.id)}
         />
       </section>
@@ -198,6 +208,7 @@ function BookingManagementPage({
             Change Booking Status
             <select
               value={selectedBooking.status}
+              disabled={selectedBooking.status !== 'pending'}
               onChange={(event) =>
                 onUpdateBookingStatus(
                   selectedBooking.id,
@@ -207,10 +218,21 @@ function BookingManagementPage({
             >
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
-              <option value="checked-in">Checked-in</option>
-              <option value="checked-out">Checked-out</option>
-              <option value="canceled">Canceled</option>
+              <option value="checked-in" disabled>
+                Checked-in
+              </option>
+              <option value="checked-out" disabled>
+                Checked-out
+              </option>
+              <option value="canceled" disabled>
+                Canceled
+              </option>
             </select>
+            <span className="hms-empty-text">
+              Only confirmation is supported by the current backend API. Checked-in
+              and checked-out statuses are refreshed by the backend from booking
+              dates.
+            </span>
           </label>
         ) : null}
       </AppModal>
