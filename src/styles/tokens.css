@@ -1,20 +1,50 @@
 /* ═══════════════════════════════════════════
-   DESIGN TOKENS
+   DESIGN TOKENS — Admin
+   Warm luxury palette — unified with client
    ═══════════════════════════════════════════ */
 :root {
-  --ink: #0f172a;
-  --muted: #64748b;
-  --panel: #ffffff;
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-  --accent-light: #eff6ff;
-  --surface: #f8fafc;
-  --line: #e2e8f0;
+  /* ── Brand scale (shared with client) ── */
+  --brand-900: #1E1208;
+  --brand-800: #2E1C0C;
+  --brand-700: #4A3018;
+  --brand-600: #6B4822;
+  --brand-500: #7A5728;
+  --brand-400: #9A7848;
+  --brand-300: #B89868;
+  --brand-200: #D4B888;
+  --brand-100: #EAD8B8;
+  --brand-50:  #F6EFE0;
+
+  /* ── Gold accent ── */
+  --gold-500: #C9A84C;
+  --gold-400: #D4B86A;
+  --gold-600: #A88838;
+
+  /* ── Text ── */
+  --text-on-dark:    #F5EFE6;
+  --text-muted-dark: #C4B09A;
+  --text-on-light:   #2A1E12;
+
+  /* ── Admin surface tokens (used by admin.css) ── */
+  --ink:          #2A1E12;
+  --muted:        #7A6A58;
+  --panel:        #FFFFFF;
+  --accent:       #C9A84C;    /* was #2563eb — now gold */
+  --accent-strong:#A88838;    /* was #1d4ed8 */
+  --accent-light: #F5EAC8;    /* was #eff6ff */
+  --surface:      #F6EFE0;    /* was #f8fafc */
+  --line:         #E8D8C0;    /* was #e2e8f0 */
+
+  /* ── Border radius ── */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
+
+  /* ── Shadows (warm-tinted) ── */
+  --shadow-sm: 0 1px 2px rgba(42, 30, 18, 0.08);
+  --shadow-md: 0 4px 12px rgba(42, 30, 18, 0.10);
+  --shadow-lg: 0 12px 40px rgba(42, 30, 18, 0.14);
+
+  /* ── Transitions ── */
   --transition: 200ms ease;
 }

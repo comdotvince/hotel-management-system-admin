@@ -1,24 +1,31 @@
 /* ═══════════════════════════════════════════
-   HMS ADMIN — DESIGN TOKENS
+   HMS ADMIN — COMPONENT STYLES
+   Warm luxury palette — aligned with client
    ═══════════════════════════════════════════ */
+
+/* ── Import Google fonts (same as client) ── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --hms-ink: #0f172a;
-  --hms-muted: #64748b;
-  --hms-panel: #ffffff;
-  --hms-line: #e2e8f0;
-  --hms-bg: #f8fafc;
-  --hms-accent: #2563eb;
-  --hms-accent-hover: #1d4ed8;
-  --hms-radius-sm: 6px;
-  --hms-radius-md: 10px;
-  --hms-radius-lg: 14px;
-  --hms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --hms-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
-  --hms-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
-  --hms-transition: 200ms ease;
+  /* re-alias hms-prefixed tokens to brand scale for backward compat */
+  --hms-ink:          var(--ink);
+  --hms-muted:        var(--muted);
+  --hms-panel:        var(--panel);
+  --hms-line:         var(--line);
+  --hms-bg:           var(--surface);
+  --hms-accent:       var(--accent);
+  --hms-accent-hover: var(--accent-strong);
+  --hms-radius-sm:    var(--radius-sm);
+  --hms-radius-md:    var(--radius-md);
+  --hms-radius-lg:    var(--radius-lg);
+  --hms-shadow-sm:    var(--shadow-sm);
+  --hms-shadow-md:    var(--shadow-md);
+  --hms-shadow-lg:    var(--shadow-lg);
+  --hms-transition:   var(--transition);
 }
 
 body {
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--hms-bg);
   color: var(--hms-ink);
 }
@@ -32,24 +39,25 @@ body {
   grid-template-columns: 260px 1fr;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebar — warm dark brown instead of cold navy ── */
 .hms-sidebar {
-  background: #0f172a;
-  color: #94a3b8;
+  background: var(--brand-900);   /* #1E1208 */
+  color: var(--text-muted-dark);  /* #C4B09A */
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .hms-brand {
   margin: 0 0 0.25rem;
   padding: 0 0.625rem;
-  color: #fff;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  color: var(--text-on-dark);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.1875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .hms-sidebar-label {
@@ -58,7 +66,7 @@ body {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #475569;
+  color: #6A5040;
   font-weight: 600;
 }
 
@@ -71,7 +79,7 @@ body {
   border: 1px solid transparent;
   border-radius: var(--hms-radius-sm);
   background: transparent;
-  color: #94a3b8;
+  color: var(--text-muted-dark);
   text-align: left;
   font: inherit;
   font-size: 0.8125rem;
@@ -82,14 +90,16 @@ body {
 }
 
 .hms-nav-item:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-on-dark);
+  background: rgba(255, 255, 255, 0.05);
 }
 
+/* Active item — gold tint instead of blue */
 .hms-nav-item.active {
-  background: rgba(37, 99, 235, 0.15);
-  color: #93c5fd;
+  background: rgba(201, 168, 76, 0.14);
+  color: #E8C872;
   font-weight: 600;
+  border-color: rgba(201, 168, 76, 0.20);
 }
 
 /* ── Main Content ── */
@@ -129,7 +139,7 @@ body {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--hms-accent);
+  color: var(--hms-accent);   /* gold */
   font-weight: 700;
 }
 
@@ -201,7 +211,7 @@ body {
 
 .hms-logout:hover {
   background: var(--hms-bg);
-  border-color: #cbd5e1;
+  border-color: var(--brand-300);
 }
 
 /* ═══════════════════════════════════════════
@@ -304,7 +314,7 @@ body {
 .hms-field-inline {
   display: grid;
   gap: 0.375rem;
-  color: #475569;
+  color: #5A4A38;
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -329,7 +339,7 @@ body {
 }
 
 .hms-field input::placeholder {
-  color: #94a3b8;
+  color: #B09A80;
 }
 
 .hms-textarea {
@@ -346,22 +356,18 @@ body {
     box-shadow var(--hms-transition);
 }
 
-.hms-textarea:focus-visible {
-  outline: none;
-  border-color: var(--hms-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
+/* Focus ring — gold instead of blue */
+.hms-textarea:focus-visible,
 .hms-field input:focus-visible,
 .hms-field select:focus-visible,
 .hms-field-inline select:focus-visible {
   outline: none;
   border-color: var(--hms-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.18);
 }
 
 .hms-field-label {
-  color: #475569;
+  color: #5A4A38;
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -386,11 +392,12 @@ body {
   flex-wrap: wrap;
 }
 
+/* Primary — gold instead of blue */
 .hms-primary-button {
   border: 0;
   border-radius: var(--hms-radius-sm);
   padding: 0.5rem 1rem;
-  background: var(--hms-accent);
+  background: var(--hms-accent);   /* #C9A84C */
   color: #fff;
   font-weight: 600;
   font-size: 0.8125rem;
@@ -401,10 +408,11 @@ body {
 }
 
 .hms-primary-button:hover:not(:disabled) {
-  background: var(--hms-accent-hover);
+  background: var(--gold-400);
 }
 
 .hms-primary-button:active:not(:disabled) {
+  background: var(--gold-600);
   transform: scale(0.98);
 }
 
@@ -422,7 +430,7 @@ body {
 
 .hms-ghost-button:hover:not(:disabled) {
   background: var(--hms-bg);
-  border-color: #cbd5e1;
+  border-color: var(--brand-300);
 }
 
 .hms-primary-button:disabled,
@@ -449,14 +457,14 @@ body {
 .hms-table th,
 .hms-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #F0E4CC;
   text-align: left;
-  color: #334155;
+  color: #4A3A28;
   font-size: 0.8125rem;
 }
 
 .hms-table th {
-  background: #f8fafc;
+  background: var(--hms-bg);
   color: var(--hms-muted);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -477,7 +485,7 @@ body {
 }
 
 .hms-table-row-clickable:hover {
-  background: #f8fafc;
+  background: #FBF5EB;
 }
 
 .hms-cell-right {
@@ -504,43 +512,43 @@ body {
 }
 
 .hms-status-badge.available {
-  background: #d1fae5;
-  color: #065f46;
+  background: #D4F0E0;
+  color: #2A6B4A;
 }
 
 .hms-status-badge.occupied {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #F5EAC8;
+  color: #7A5010;
 }
 
 .hms-status-badge.maintenance {
-  background: #fef3c7;
-  color: #92400e;
+  background: #FEF3C7;
+  color: #92400E;
 }
 
 .hms-status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: #FEF3C7;
+  color: #92400E;
 }
 
 .hms-status-badge.confirmed {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #F5EAC8;
+  color: #7A5010;
 }
 
 .hms-status-badge.checked-in {
-  background: #d1fae5;
-  color: #065f46;
+  background: #D4F0E0;
+  color: #2A6B4A;
 }
 
 .hms-status-badge.checked-out {
-  background: #f1f5f9;
-  color: #475569;
+  background: #F0E8DC;
+  color: #6A5A48;
 }
 
 .hms-status-badge.canceled {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #FAD8D8;
+  color: #8B3030;
 }
 
 /* ═══════════════════════════════════════════
@@ -564,7 +572,7 @@ body {
 }
 
 .hms-occupancy-row-head span {
-  color: #475569;
+  color: #5A4A38;
   font-size: 0.8125rem;
   font-weight: 500;
 }
@@ -578,7 +586,7 @@ body {
   height: 0.5rem;
   border-radius: 999px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #EAD8B8;
 }
 
 .hms-occupancy-bar {
@@ -588,15 +596,15 @@ body {
 }
 
 .hms-occupancy-bar.available {
-  background: #22c55e;
+  background: #4A9B6F;
 }
 
 .hms-occupancy-bar.occupied {
-  background: #3b82f6;
+  background: #C9A84C;
 }
 
 .hms-occupancy-bar.maintenance {
-  background: #f59e0b;
+  background: #D4890A;
 }
 
 /* ═══════════════════════════════════════════
@@ -652,9 +660,10 @@ body {
   box-shadow: var(--hms-shadow-sm);
 }
 
+/* Total card — gold-tinted instead of blue-tinted */
 .hms-billing-card.total {
-  border-color: #93c5fd;
-  background: #eff6ff;
+  border-color: #D4B888;
+  background: var(--accent-light);
 }
 
 .hms-billing-card span {
@@ -691,7 +700,7 @@ body {
 }
 
 .hms-inline-list-item:hover {
-  background: #f1f5f9;
+  background: #F0E4CC;
 }
 
 /* ═══════════════════════════════════════════
@@ -701,7 +710,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(30, 18, 8, 0.55);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -716,7 +725,7 @@ body {
   border: 1px solid var(--hms-line);
   border-radius: var(--hms-radius-lg);
   background: var(--hms-panel);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 24px 48px rgba(30, 18, 8, 0.20);
   padding: 1.5rem;
   display: grid;
   gap: 1.25rem;
@@ -763,7 +772,7 @@ body {
 }
 
 .hms-field-error {
-  color: #dc2626;
+  color: #C44040;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -772,7 +781,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #475569;
+  color: #5A4A38;
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
@@ -841,13 +850,13 @@ body {
 }
 
 .hms-room-image-input input::placeholder {
-  color: #94a3b8;
+  color: #B09A80;
 }
 
 .hms-room-image-input input:focus-visible {
   outline: none;
   border-color: var(--hms-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.18);
 }
 
 .hms-room-image-grid {
@@ -877,7 +886,7 @@ body {
   border-radius: calc(var(--hms-radius-sm) - 2px);
   object-fit: cover;
   display: block;
-  background: #f1f5f9;
+  background: #EAD8B8;
 }
 
 .hms-room-details {
@@ -899,7 +908,7 @@ body {
   border-radius: 999px;
   background: var(--hms-bg);
   padding: 0.25rem 0.625rem;
-  color: #334155;
+  color: #4A3A28;
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -941,22 +950,16 @@ body {
 }
 
 @keyframes hms-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
 .hms-toast.success {
-  border-left: 3px solid #22c55e;
+  border-left: 3px solid #4A9B6F;
 }
 
 .hms-toast.error {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid #C44040;
 }
 
 /* ═══════════════════════════════════════════
@@ -987,7 +990,7 @@ body {
   .hms-sidebar {
     padding: 1rem 1.25rem;
     border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .hms-nav {
