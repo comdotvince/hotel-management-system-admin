@@ -29,6 +29,8 @@ type BackendRoomPayload = {
   room_description: string
   room_availability: string
   room_url: string
+  room_price: number
+  room_capacity: number
 }
 
 type CreateRoomResponse = {
@@ -155,6 +157,8 @@ const toBackendPayload = (payload: RoomPayload): BackendRoomPayload => ({
   room_description: payload.description.trim(),
   room_availability: toBackendAvailability(payload.status),
   room_url: payload.images[0] ?? '',
+  room_price: payload.pricePerNight,
+  room_capacity: payload.capacity,
 })
 
 const fetchRooms = async () => {
@@ -198,14 +202,14 @@ export const roomService = {
   },
 
   deleteRoom: async (roomId: number): Promise<void> => {
-    await api.delete<{ message: string }>('/api/room/delete', { room_id: roomId })
+    await api.delete<{ message: string }>('/api/room/delete', { roomid: roomId })
   },
 
   bulkDeleteRooms: async (roomIds: number[]): Promise<void> => {
     await Promise.all(
       roomIds.map((roomId) =>
         api.delete<{ message: string }>('/api/room/delete', {
-          room_id: roomId,
+          roomid: roomId,
         })
       )
     )
