@@ -129,6 +129,22 @@ const toBackendAvailability = (status: RoomStatus) => {
   return 'Maintenance'
 }
 
+const serializeImages = (images: string[]) => {
+  const normalizedImages = [
+    ...new Set(images.map((image) => coerceString(image)).filter(Boolean)),
+  ]
+
+  if (!normalizedImages.length) {
+    return ''
+  }
+
+  if (normalizedImages.length === 1) {
+    return normalizedImages[0]
+  }
+
+  return JSON.stringify(normalizedImages)
+}
+
 const toRoomRecord = (room: BackendRoom): RoomRecord => {
   const roomId = coerceNumber(room.room_id ?? room.roomid)
   const images = parseStringList(room.room_url ?? room.room_image)
@@ -156,7 +172,7 @@ const toBackendPayload = (payload: RoomPayload): BackendRoomPayload => ({
   room_category: payload.roomType,
   room_description: payload.description.trim(),
   room_availability: toBackendAvailability(payload.status),
-  room_url: payload.images[0] ?? '',
+  room_url: serializeImages(payload.images),
   room_price: payload.pricePerNight,
   room_capacity: payload.capacity,
 })

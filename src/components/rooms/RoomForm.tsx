@@ -2,6 +2,10 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import AppModal from "../AppModal";
 import type { RoomRecord, RoomStatus, RoomType } from "../../data/hmsMockData";
 import type { RoomPayload } from "../../services/roomService";
+import {
+  getCloudinaryConfigurationError,
+  uploadImageToCloudinary,
+} from "../../services/cloudinaryService";
 
 type RoomFormMode = "create" | "edit";
 
@@ -43,21 +47,6 @@ const getStatusLabel = (status: RoomStatus) =>
       ? "Occupied"
       : "Maintenance";
 
-const readFileAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-      const result = fileReader.result;
-      if (typeof result === "string") {
-        resolve(result);
-        return;
-      }
-      reject(new Error("Invalid file format."));
-    };
-    fileReader.onerror = () =>
-      reject(new Error(`Failed to read ${file.name}.`));
-    fileReader.readAsDataURL(file);
-  });
 
 function RoomForm({
   isOpen,
@@ -67,6 +56,7 @@ function RoomForm({
   onClose,
   onSubmit,
 }: RoomFormProps) {
+  const cloudinaryConfigurationError = getCloudinaryConfigurationError();
   const [roomNumber, setRoomNumber] = useState(initialRoom?.roomNumber ?? "");
   const [roomType, setRoomType] = useState<RoomType>(
     initialRoom?.roomType ?? "Single",
@@ -132,13 +122,13 @@ function RoomForm({
     setIsUploadingImages(true);
 
     try {
-      const fileDataUrls = await Promise.all(
-        Array.from(selectedFiles).map((file) => readFileAsDataUrl(file)),
+      const uploadedUrls = await Promise.all(
+        Array.from(selectedFiles).map((file) => uploadImageToCloudinary(file)),
       );
 
       setImages((currentImages) => {
         const uniqueImages = new Set(currentImages);
-        fileDataUrls.forEach((fileDataUrl) => uniqueImages.add(fileDataUrl));
+        uploadedUrls.forEach((url) => uniqueImages.add(url));
         return [...uniqueImages];
       });
     } catch (uploadError) {
@@ -291,17 +281,22 @@ function RoomForm({
           <span className="hms-field-label">Room Images</span>
 
           <label className="hms-field">
-            Upload Local Images
+            Upload Images
             <input
               type="file"
               accept="image/*"
               multiple
               onChange={handleLocalImageUpload}
-              disabled={isUploadingImages}
+              disabled={isUploadingImages || Boolean(cloudinaryConfigurationError)}
             />
             {isUploadingImages ? (
               <span className="hms-empty-text">
-                Uploading selected images...
+                Uploading to Cloudinary...
+              </span>
+            ) : null}
+            {cloudinaryConfigurationError ? (
+              <span className="hms-field-error">
+                {cloudinaryConfigurationError}
               </span>
             ) : null}
             {imageUploadError ? (
@@ -332,7 +327,7 @@ function RoomForm({
           <button
             type="submit"
             className="hms-primary-button"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingImages}
           >
             {isSubmitting
               ? mode === "create"

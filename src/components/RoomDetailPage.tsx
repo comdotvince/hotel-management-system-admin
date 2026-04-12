@@ -12,6 +12,7 @@ import {
   type RoomInventoryItem,
   type RoomTypeId,
 } from "../data/rooms";
+import { uploadImageToCloudinary } from "../services/cloudinaryService";
 
 type RoomMutationInput = Omit<RoomInventoryItem, "id">;
 
@@ -22,25 +23,6 @@ type RoomDetailPageProps = {
   onDeleteRoom: (roomId: RoomInventoryId) => void;
   onBackToRooms: () => void;
 };
-
-const readFileAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-      if (typeof fileReader.result === "string") {
-        resolve(fileReader.result);
-        return;
-      }
-
-      reject(new Error("Failed to read file as data URL"));
-    };
-    fileReader.onerror = () =>
-      reject(new Error(`Failed to read "${file.name}"`));
-    fileReader.readAsDataURL(file);
-  });
-
-const readFilesAsDataUrls = async (files: File[]) =>
-  Promise.all(files.map(readFileAsDataUrl));
 
 function RoomDetailPage({
   roomInventory,
@@ -60,6 +42,7 @@ function RoomDetailPage({
   const [draftImages, setDraftImages] = useState<string[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [editError, setEditError] = useState("");
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   if (!room) {
     return (
@@ -187,8 +170,12 @@ function RoomDetailPage({
       return;
     }
 
+    setIsUploadingImages(true);
+
     try {
-      const uploadedImages = await readFilesAsDataUrls(uploadedFiles);
+      const uploadedImages = await Promise.all(
+        uploadedFiles.map((file) => uploadImageToCloudinary(file)),
+      );
       setDraftImages((currentImages) => {
         const nextImages = [...currentImages];
         uploadedImages.forEach((imageUrl) => {
@@ -199,8 +186,14 @@ function RoomDetailPage({
         return nextImages;
       });
       setEditError("");
-    } catch {
-      setEditError("Failed to upload image.");
+    } catch (uploadError) {
+      setEditError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Failed to upload image.",
+      );
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -412,6 +405,7 @@ function RoomDetailPage({
                     accept="image/*"
                     multiple
                     onChange={handleEditImageUpload}
+                    disabled={isUploadingImages}
                   />
                 </label>
                 <button
@@ -422,6 +416,10 @@ function RoomDetailPage({
                   Remove All Images
                 </button>
               </div>
+
+              {isUploadingImages ? (
+                <p className="room-form-error">Uploading to Cloudinary...</p>
+              ) : null}
 
               {draftImages.length ? (
                 <div className="room-edit-image-list">

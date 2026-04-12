@@ -1,5 +1,15 @@
 # React + TypeScript + Vite
 
+## Cloudinary Setup
+
+Room image uploads use Cloudinary unsigned uploads from the admin client.
+
+1. Set these keys in `.env`:
+   - `VITE_CLOUDINARY_CLOUD_NAME`
+   - `VITE_CLOUDINARY_UPLOAD_PRESET`
+   - `VITE_CLOUDINARY_FOLDER` (optional)
+2. In Cloudinary, ensure the selected upload preset is **unsigned** and enabled.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
